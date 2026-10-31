@@ -1,0 +1,4 @@
+pytest
+selenium
+pytest_reportportal
+reportportal_client
