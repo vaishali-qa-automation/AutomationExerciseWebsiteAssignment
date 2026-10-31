@@ -1,0 +1,7 @@
+*.log
+*.png
+*__pycache__*
+.idea/*
+.venv/
+*.html# created by virtualenv automatically
+
