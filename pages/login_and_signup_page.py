@@ -1,8 +1,10 @@
+import logging
+
 from selenium.webdriver.common.by import By
 
+from models.user import User
 from pages.base_page import BasePageClass
 from pages.headers_components import HeaderComponentClass
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -96,11 +98,7 @@ class LoginAndSignUpPageClass(BasePageClass):
 
     def _click_login_button(self) -> None:
         """Click the login button."""
-        login_button = self.locate_element(
-            LoginAndSignUpLocators.LOGIN_BUTTON
-        )
-        self.wait_for_element_to_be_clickable(login_button)
-        self.click_element(login_button)
+        self.click_element(LoginAndSignUpLocators.LOGIN_BUTTON)
 
     def login(self, username: str, password: str) -> None:
         """Log in to the application.
@@ -142,11 +140,7 @@ class LoginAndSignUpPageClass(BasePageClass):
 
     def _click_signup_button(self) -> None:
         """Click the signup button."""
-        signup_button = self.locate_element(
-            LoginAndSignUpLocators.SIGNUP_BUTTON
-        )
-        self.wait_for_element_to_be_clickable(signup_button)
-        self.click_element(signup_button)
+        self.click_element(LoginAndSignUpLocators.SIGNUP_BUTTON)
 
     def enter_signup_details(
         self,
@@ -184,10 +178,7 @@ class LoginAndSignUpPageClass(BasePageClass):
 
         if title not in title_locators:
             raise ValueError("Title must be either 'Mr' or 'Mrs'.")
-
-        title_element = self.locate_element(title_locators[title])
-        self.wait_for_element_to_be_clickable(title_element)
-        self.click_element(title_element)
+        self.click_element(title_locators[title])
 
     def _enter_account_password(self, password: str) -> None:
         """Enter the password for the new account.
@@ -381,92 +372,45 @@ class LoginAndSignUpPageClass(BasePageClass):
 
     def _click_create_account_button(self) -> None:
         """Click the Create Account button."""
-        create_account_button = self.locate_element(
-            LoginAndSignUpLocators.CREATE_ACCOUNT_BUTTON
-        )
-        self.wait_for_element_to_be_clickable(create_account_button)
-        self.click_element(create_account_button)
+        self.click_element(LoginAndSignUpLocators.CREATE_ACCOUNT_BUTTON)
 
     # ------------------------------------------------------------------
     # Complete account information
     # ------------------------------------------------------------------
 
-    def enter_account_information(
-        self,
-        title: str,
-        password: str,
-        day: str,
-        month: str,
-        year: str,
-        first_name: str,
-        last_name: str,
-        company: str,
-        address: str,
-        address_2: str,
-        country: str,
-        state: str,
-        city: str,
-        zipcode: str,
-        mobile_number: str,
-        subscribe_newsletter: bool = False,
-        receive_special_offers: bool = False,
-    ) -> None:
-        """Enter the account and address information.
+    def enter_account_information(self, user: User) -> None:
+        """Enter the account and address information from a User model."""
+        address = user.address
+        dob = user.date_of_birth
 
-        Args:
-            title: Account holder's title. Supported values are ``Mr`` and
-                ``Mrs``.
-            password: Password for the new account.
-            day: Day of birth.
-            month: Month of birth.
-            year: Year of birth.
-            first_name: Account holder's first name.
-            last_name: Account holder's last name.
-            company: Company name.
-            address: Primary address.
-            address_2: Secondary address information.
-            country: Country of residence.
-            state: State or province.
-            city: City of residence.
-            zipcode: Postal or ZIP code.
-            mobile_number: Mobile phone number.
-            subscribe_newsletter: Whether to subscribe to the newsletter.
-            receive_special_offers: Whether to receive special offers.
-        """
-        self._select_title(title)
-        self._enter_account_password(password)
+        self._select_title(user.title)
+        self._enter_account_password(user.password)
+        self._select_date_of_birth(day=dob.day, month=dob.month, year=dob.year)
+        self._select_newsletter(user.subscribe_newsletter)
+        self._select_special_offers(user.receive_special_offers)
 
-        self._select_date_of_birth(
-            day=day,
-            month=month,
-            year=year,
-        )
+        self._enter_first_name(address.first_name)
+        self._enter_last_name(address.last_name)
+        self._enter_company(address.company)
+        self._enter_address(address.address)
+        self._enter_address_2(address.address_2)
 
-        self._select_newsletter(subscribe_newsletter)
-        self._select_special_offers(receive_special_offers)
-
-        self._enter_first_name(first_name)
-        self._enter_last_name(last_name)
-        self._enter_company(company)
-        self._enter_address(address)
-        self._enter_address_2(address_2)
-
-        self._select_country(country)
-        self._enter_state(state)
-        self._enter_city(city)
-        self._enter_zipcode(zipcode)
-        self._enter_mobile_number(mobile_number)
+        self._select_country(address.country)
+        self._enter_state(address.state)
+        self._enter_city(address.city)
+        self._enter_zipcode(address.zipcode)
+        self._enter_mobile_number(address.mobile_number)
 
     def create_account(self) -> None:
         """Submit the completed account information form."""
         self._click_create_account_button()
 
-    def is_account_created(self)-> bool:
+    def is_account_created(self) -> bool:
         """
         This method checks if the account has been created.
         Returns: True or False.
 
         """
         element = self.locate_element(LoginAndSignUpLocators.ACCOUNT_CREATED_INFO)
-        is_created =  self.is_element_visible(element)
+        is_created = self.is_element_visible(LoginAndSignUpLocators.ACCOUNT_CREATED_INFO)
         return is_created
