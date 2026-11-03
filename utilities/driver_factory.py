@@ -7,9 +7,27 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 def _build_chrome_driver(headless=True):
     options = ChromeOptions()
     if headless:
-        options.add_argument("--headless")
-    options.add_argument("--maximize")
+        options.add_argument("--headless=new")
+    options.add_argument("--start-maximized")
+    options.add_argument("--no-first-run")
     driver = webdriver.Chrome(options=options)
+
+    driver.execute_cdp_cmd("Network.enable", {})
+    driver.execute_cdp_cmd("Network.setBlockedURLs", {
+        "urls": [
+            "*doubleclick.net*",
+            "*googlesyndication.com*",
+            "*googleadservices.com*",
+            "*google-analytics.com*",
+            "*googleads.g.doubleclick.net*",
+            "*adservice.google.com*",
+            "*pagead2.googlesyndication.com*",
+            "*aswift_*",
+            "*tpc.googlesyndication.com*",
+            "*.amazon-adsystem.com*",
+            "*.adnxs.com*",
+        ]
+    })
     return driver
 
 
@@ -26,7 +44,8 @@ def _build_edge_driver(headless=True):
     options = EdgeOptions()
     if headless:
         options.add_argument("--headless")
-    options.add_argument("--maximize")
+    options.add_argument("--start-maximized")
+    options.add_argument("--no-first-run")
     driver = webdriver.Edge(options=options)
     return driver
 

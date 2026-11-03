@@ -2,7 +2,7 @@ import uuid
 
 from faker import Faker
 
-from models.user import User, Address
+from models.user import Address, User
 
 fake = Faker()
 

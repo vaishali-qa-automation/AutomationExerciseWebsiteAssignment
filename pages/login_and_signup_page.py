@@ -411,6 +411,8 @@ class LoginAndSignUpPageClass(BasePageClass):
         Returns: True or False.
 
         """
-        element = self.locate_element(LoginAndSignUpLocators.ACCOUNT_CREATED_INFO)
-        is_created = self.is_element_visible(LoginAndSignUpLocators.ACCOUNT_CREATED_INFO)
+        self.locate_element(LoginAndSignUpLocators.ACCOUNT_CREATED_INFO)
+        is_created = self.is_element_visible(
+            LoginAndSignUpLocators.ACCOUNT_CREATED_INFO
+        )
         return is_created

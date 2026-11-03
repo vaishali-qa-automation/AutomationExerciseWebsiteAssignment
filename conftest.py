@@ -1,5 +1,4 @@
 import logging
-import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
@@ -9,10 +8,9 @@ from reportportal_client import RPLogger, RPLogHandler
 
 from api.base_client import BaseClient
 from api.users_api import UsersApi
-from utilities.driver_factory import get_driver
 from utilities.common_methods import get_config_section
 from utilities.data_factory import new_user
-
+from utilities.driver_factory import get_driver
 
 logging.getLogger("selenium").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -96,14 +94,18 @@ def configure_global_logging(request):
         fmt="%(asctime)s [%(levelname)s] %(name)s::%(funcName)s::%(lineno)d::%(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    added = []
+
+    log_dir = Path(request.config.rootpath) / "logs"
+    log_dir.mkdir(exist_ok=True, parents=True)
 
     # 1. Local File Handler (Tracks everything globally across POMs and tests)
     file_handler = logging.FileHandler(
-        "logs/execution_flow.log", mode="w", encoding="utf-8"
+        log_dir / "execution_flow.log", mode="w", encoding="utf-8"
     )
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(log_format)
-    root_logger.addHandler(file_handler)
+    added.append(file_handler)
 
     # 2. Extract the ReportPortal Service Orchestrator
     rp_plugin = request.config.pluginmanager.get_plugin("pytest-reportportal")
@@ -113,27 +115,17 @@ def configure_global_logging(request):
         # ReportPortal Data Stream
         rp_handler = RPLogHandler(rp_client=rp_service)
         rp_handler.setLevel(logging.INFO)
-        root_logger.addHandler(rp_handler)
+        added.append(rp_handler)
 
-        # Standard Terminal Output (Mirroring)
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(logging.INFO)
-        console_handler.setFormatter(log_format)
-        root_logger.addHandler(console_handler)
-    else:
-        # Fallback Terminal output if offline/not running with --reportportal
-        fallback_console = logging.StreamHandler(sys.stdout)
-        fallback_console.setLevel(logging.INFO)
-        fallback_console.setFormatter(log_format)
-        root_logger.addHandler(fallback_console)
+    for h in added:
+        root_logger.addHandler(h)
 
     yield
 
     # Clean up handlers after the test session finishes
-    handlers = root_logger.handlers[:]
-    for handler in handlers:
-        handler.close()
-        root_logger.removeHandler(handler)
+    for h in added:
+        root_logger.removeHandler(h)
+        h.close()
 
 
 # pytesthook for reporting and adding the screenshots on failure
