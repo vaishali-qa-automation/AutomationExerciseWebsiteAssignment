@@ -2,6 +2,7 @@ import logging
 import time
 from collections.abc import Callable
 from functools import wraps
+from typing import Tuple, Type
 
 from selenium.common import (
     NoSuchElementException,
@@ -24,7 +25,9 @@ def logging_decorator(func):
 
     @wraps(func)
     def logging_wrapper(*args, **kwargs):
-        logger.debug(f"Executing {func.__name__}")
+        visible_args = args[1:] if len(args) > 0 else args
+
+        logger.debug(f"Executing {func.__name__} with agrs {visible_args} and kwargs {kwargs}")
 
         try:
             result = func(*args, **kwargs)
@@ -33,54 +36,51 @@ def logging_decorator(func):
 
             return result
 
-        except Exception:
-            logger.exception(f"Exception occurred while executing {func.__name__}")
+        except Exception as e:
+            logger.warning(
+                f"Transient exception in '{func.__name__}': {type(e).__name__} -> {e}. "
+
+            )
             raise
 
     return logging_wrapper
 
 
 def retry_on_exception(
-    times: int = 3,
-    delay: float = 0,
+        times: int = 3,
+        delay: float = 0.0,
+        exceptions: Tuple[Type[BaseException], ...] = (Exception,)  # Configurable exceptions
 ) -> Callable:
-    """Retry a function when a specified exception occurs.
+    """Decorator to retry a function when specified exceptions occur.
 
     Args:
         times: Maximum number of attempts.
         delay: Delay in seconds between retry attempts.
-
-    Returns:
-        A decorator that retries the decorated function.
-
-    Raises:
-        ValueError: If ``times`` is less than one.
+        exceptions: A tuple of exception classes to catch and retry on.
     """
     if times < 1:
         raise ValueError("times must be at least 1.")
 
-    def retry_decorator(func):
-
+    def retry_decorator(func: Callable) -> Callable:
         @wraps(func)
         def retry_wrapper(*args, **kwargs):
             for attempt in range(1, times + 1):
                 try:
                     return func(*args, **kwargs)
-
-                except (NoSuchElementException, StaleElementReferenceException,TimeoutException):
+                except exceptions as e:
                     if attempt == times:
                         logger.exception(
-                            f"{func.__name__} failed after {times} attempts."
+                            f"Method '{func.__name__}' failed final attempt ({times}/{times})."
                         )
-                        raise
+                        raise  # Re-raise the caught exception
 
                     logger.warning(
-                        f"{func.__name__} failed on attempt {attempt}/{times}. Retrying..."
+                        f"Method '{func.__name__}' failed on attempt {attempt}/{times}. "
+                        f"Reason: {type(e).__name__}. Retrying in {delay}s..."
                     )
 
-                    if delay:
+                    if delay > 0:
                         time.sleep(delay)
-            return None
 
         return retry_wrapper
 

@@ -1,16 +1,17 @@
 import logging
-from typing import Any, Union
+from typing import Any
 
-from selenium.common import ElementClickInterceptedException
+from selenium.common import ElementClickInterceptedException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.wait import WebDriverWait
+
 from utilities.decorators import (
     logging_decorator,
-    retry_on_exception, retry_on_condition,
+    retry_on_condition,
+    retry_on_exception,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -44,51 +45,54 @@ class BasePageClass:
             logger.info(f"Failed to navigated to {url}")
 
     @logging_decorator
-    @retry_on_exception(times=3, delay=0.2)
     def locate_element(self, locator: tuple[str, str]) -> WebElement:
         """Waits for an element to be present and visible in the DOM.
 
         Args:
-            locator: A tuple containing the locator strategy and target value
-                (e.g., `(By.XPATH, "//div")`).
-
-        Returns:
-            WebElement: The located and visible Selenium WebElement.
-
-        Raises:
-            TimeoutException: If the element is not found/visible within timeout limits.
+            locator: A tuple containing the locator strategy and target value.
         """
         self.wait.until(EC.presence_of_element_located(locator))
-        self.wait.until(EC.visibility_of_element_located(locator))
-        elem = self.driver.find_element(*locator)
+        elem = self.wait.until(EC.visibility_of_element_located(locator))
         return elem
 
     @logging_decorator
-    def click_element(self, element: WebElement):
-        try:
-            self.wait_for_element_to_be_clickable(element)
-            element.click()
-        except ElementClickInterceptedException:
-            logger.error("Element click was intercepted and failed to click")
-
-    @logging_decorator
-    def enter_text(self, locator, text: str) -> None:
-        """Wait for an input element and enter the provided text.
-
-        Args:
-            locator: Selenium locator tuple used to find the input element.
-            text: Text to enter into the input element.
+    @retry_on_exception(times=2, delay=0.2, exceptions=(StaleElementReferenceException,))
+    def click_element(self, locator: tuple[str, str]) -> None:
         """
+        Waits for an element to be clickable by its locator and clicks it.
+        Args:
+            locator: locator to locate element and click it
+
+        Returns: None
+
+        """
+        element = self.wait.until(EC.element_to_be_clickable(locator))
+        element.click()
+
+    @retry_on_exception(times=2, delay=0.2, exceptions=(StaleElementReferenceException,))
+    @logging_decorator
+    def enter_text(self, locator: tuple[str, str], text: str) -> None:
+        """
+        Wait for an input element, clear it, and enter text using its locator.
+        Args:
+            locator: locator to locate element and enter text.
+            text: text to enter
+
+        Returns: None
+
+        """
+        # Click using the locator to prevent stale element issues
+        self.click_element(locator)
+
+        # Grab the fresh element reference to interact with it directly
         element = self.locate_element(locator)
-        self.click_element(element)
         element.clear()
         element.send_keys(text)
 
     @logging_decorator
-    @retry_on_exception(times=3, delay=0.2)
     def wait_for_element_to_be_clickable(
-            self,
-            element: WebElement,
+        self,
+        element: WebElement,
     ) -> None:
         """Wait until an element becomes clickable.
 
@@ -101,75 +105,66 @@ class BasePageClass:
         """
         self.wait.until(EC.element_to_be_clickable(element))
 
-
     @logging_decorator
-    @retry_on_condition(delay=0.1)
-    def is_element_invisible(self, element: WebElement) -> bool:
-        """
-        This method checks if element is invisible or not.
-        Args:
-            element: WebElement to check for invisible.
+    def is_element_visible(self, locator: tuple[str, str], timeout: int = 3) -> bool:
+        """Safely checks if an element is visible within a specific timeout.
 
-        Returns: True or False
+        Returns:
+            bool: True if visible within timeout, False otherwise.
         """
-        result = self.wait.until(EC.invisibility_of_element(element))
-        if isinstance(result, WebElement):
-            return False
-        return True
-
-    @logging_decorator
-    @retry_on_condition(delay=0.1)
-    def is_element_visible(self, element: WebElement) ->  bool:
-        """
-        This method checks for visibility of an element and returns WebElement or False.
-        Args:
-            element: WebElement to check for visibility.
-
-        Returns: bool or WebElement
-
-        """
-        result = self.wait.until(EC.visibility_of(element))
-        if isinstance(result, WebElement):
+        try:
+            # Instantiate a localized wait using the custom timeout parameter
+            local_wait = WebDriverWait(self.driver, timeout=timeout)
+            local_wait.until(EC.visibility_of_element_located(locator))
             return True
-        return False
-
+        except TimeoutException:
+            return False
 
     @logging_decorator
-    @retry_on_condition(delay=0.1)
+    def is_element_invisible(self, locator: tuple[str, str], timeout: int = 3) -> bool:
+        """Safely checks if an element is invisible or missing within a specific timeout.
+
+        Returns:
+            bool: True if invisible/absent within timeout, False otherwise.
+        """
+        try:
+            local_wait = WebDriverWait(self.driver, timeout=timeout)
+            local_wait.until(EC.invisibility_of_element_located(locator))
+            return True
+        except TimeoutException:
+            return False
+
+    @logging_decorator
     def wait_for_url_contains(self, url_substring: str, timeout: int = 5) -> bool:
         """Waits until the current browser URL contains the given substring.
 
-        Args:
-            url_substring: Partial string expected to be in the URL.
-            timeout: Maximum wait time in seconds.
-
         Returns:
-            bool: True if the condition is met within the timeout.
+            bool: True if condition is met, False if it times out.
         """
-
-        return self.wait.until(EC.url_contains(url_substring))
+        try:
+            local_wait = WebDriverWait(self.driver, timeout=timeout)
+            local_wait.until(EC.url_contains(url_substring))
+            return True
+        except TimeoutException:
+            return False
 
     @logging_decorator
-    @retry_on_condition(delay=0.1)
     def wait_for_exact_url(self, expected_url: str, timeout: int = 5) -> bool:
         """Waits until the current browser URL exactly matches the given string.
 
-        Args:
-            expected_url: The full expected URL.
-            timeout: Maximum wait time in seconds.
-
         Returns:
-            bool: True if the condition is met within the timeout.
+            bool: True if condition is met, False if it times out.
         """
-        return self.wait.until(EC.url_to_be(expected_url))
-
+        try:
+            local_wait = WebDriverWait(self.driver, timeout=timeout)
+            local_wait.until(EC.url_to_be(expected_url))
+            return True
+        except TimeoutException:
+            return False
 
     @logging_decorator
     def select_option(
-            self,
-            locator:  tuple[str, str],
-            value: Union[str, int],
-            by: str = "text"
+        self, locator: tuple[str, str], value: str | int, by: str = "text"
     ) -> None:
         """Selects an option from a standard HTML <select> dropdown element.
 
@@ -195,11 +190,12 @@ class BasePageClass:
         select = Select(dropdown_element)
 
         # 3. Perform selection based on passed strategy
-        if by == "text":
+        strategy = by.lower()
+        if strategy == "text":
             select.select_by_visible_text(str(value))
-        elif by == "value":
+        elif strategy == "value":
             select.select_by_value(str(value))
-        elif by == "index":
+        elif strategy == "index":
             if not isinstance(value, int):
                 raise ValueError(
                     f"Selection strategy 'index' requires an integer value, got {type(value)}"

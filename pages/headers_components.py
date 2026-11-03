@@ -4,7 +4,6 @@ from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePageClass
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -42,8 +41,7 @@ class HeaderComponentClass(BasePageClass):
         super().__init__(driver)
 
     def _navigate_to_page(self, locator) -> None:
-        element = self.locate_element(locator)
-        self.click_element(element)
+        self.click_element(locator)
 
     def navigate_to_login_page(self) -> None:
         """Navigate to the login and signup page.
@@ -57,16 +55,12 @@ class HeaderComponentClass(BasePageClass):
         """
         logger.info("Navigating to the Login/Signup page.")
 
-        self._navigate_to_page(
-            HeaderComponentLocator.SIGNUP_AND_LOGIN_PAGE_NAV
-        )
+        self._navigate_to_page(HeaderComponentLocator.SIGNUP_AND_LOGIN_PAGE_NAV)
 
         if self.wait_for_url_contains("/login"):
             logger.info("Successfully navigated to the Login/Signup page.")
         else:
-            logger.warning(
-                "Failed to navigate to the Login/Signup page."
-            )
+            logger.warning("Failed to navigate to the Login/Signup page.")
 
     def navigate_to_products_page(self) -> None:
         """Navigate to the products page.
@@ -80,16 +74,12 @@ class HeaderComponentClass(BasePageClass):
         """
         logger.info("Navigating to the Products page.")
 
-        self._navigate_to_page(
-            HeaderComponentLocator.PRODUCTS_VIEW_NAV
-        )
+        self._navigate_to_page(HeaderComponentLocator.PRODUCTS_VIEW_NAV)
 
         if self.wait_for_url_contains("/products"):
             logger.info("Successfully navigated to the Products page.")
         else:
-            logger.warning(
-                "Failed to navigate to the Products page."
-            )
+            logger.warning("Failed to navigate to the Products page.")
 
     def navigate_to_cart_page(self) -> None:
         """Navigate to the shopping cart page.
@@ -108,9 +98,7 @@ class HeaderComponentClass(BasePageClass):
         if self.wait_for_url_contains("/view_cart"):
             logger.info("Successfully navigated to the Cart page.")
         else:
-            logger.warning(
-                "Failed to navigate to the Cart page."
-            )
+            logger.warning("Failed to navigate to the Cart page.")
 
     def logout(self) -> None:
         """Log out the currently authenticated user.
@@ -129,6 +117,4 @@ class HeaderComponentClass(BasePageClass):
         if self.wait_for_url_contains("/login"):
             logger.info("Successfully logged out the user.")
         else:
-            logger.warning(
-                "Failed to verify logout navigation."
-            )
+            logger.warning("Failed to verify logout navigation.")
