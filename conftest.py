@@ -1,55 +1,85 @@
-import pytest
-import sys
 import logging
+import sys
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.firefox.options import Options as FirefoxOption
+from collections.abc import Callable
 from pathlib import Path
+
+import pytest
 from reportportal_client import RPLogger, RPLogHandler
-import json
-import uuid
+
+from api.base_client import BaseClient
+from api.users_api import UsersApi
+from utilities.driver_factory import get_driver
+from utilities.common_methods import get_config_section
+from utilities.data_factory import new_user
 
 
-TEST_DATA_PATH = (
-    Path(__file__).parent / "data" / "signup_data.json"
-)
+logging.getLogger("selenium").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
+
+CONFIG_FILE = Path(__file__).parent / "config" / "env_config.ini"
+SUPPORTED_BROWSERS = ["chrome", "firefox"]
 
 
 def pytest_addoption(parser):
     parser.addoption(
-        '--browser', action="store", default=None,
-        help="Browser type: Chrome or Firefox"
+        "--browser",
+        action="store",
+        default=None,
+        type=str.lower,
+        help="Browser to run UI test on chrome | firefox",
+        choices=SUPPORTED_BROWSERS,
     )
     parser.addoption(
-        "--headless", action="store", default=False,
-        help="Provide True for headless mode"
+        "--headless",
+        action="store_true",
+        default=None,
+        help="Run the browser in headless mode",
+    )
+    parser.addini(
+        "headless", type="bool", default=False, help="Run the browser in headless mode"
+    )
+    parser.addini(
+        "browser", type="string", default=False, help="Browser type: Chrome or Firefox"
     )
 
 
-
-@pytest.fixture(scope='session')
-def get_driver(request):
+@pytest.fixture
+def driver(request):
     # Either this will be in pytest.ini file or provided from CLI
     browser = request.config.getoption("--browser") or request.config.getini("browser")
-    browser = browser.strip().lower()
-    driver = None
-    if browser == 'chrome':
-        options = ChromeOptions()
-        options.add_argument("--start-maximized")
-        options.add_argument("--disable-extensions")
-        driver = webdriver.Chrome()
-    elif browser == 'firefox':
-        driver = webdriver.Firefox()
-    else:
-        error_msg = f"Provided browser name '{browser}' is invalid. Expected 'chrome' or 'firefox'."
-        logging.error(error_msg)
-        pytest.exit(error_msg)
+    headless = request.config.getoption("--headless") or request.config.getini(
+        "headless"
+    )
+    driver = get_driver(browser, headless)
     yield driver
-    if driver:
-        driver.quit()
+    driver.quit()
+
+
+@pytest.fixture(scope="session")
+def base_client():
+    default_section = get_config_section(CONFIG_FILE)
+    base_url = default_section["base_url"]
+    base_client = BaseClient(base_url)
+    yield base_client
+    base_client.close()
+
+
+@pytest.fixture(scope="session")
+def user_api(base_client):
+    user_api = UsersApi(base_client)
+    return user_api
+
+
+@pytest.fixture
+def user_data_factory() -> Callable:
+    """
+    Fixture that returns the imported new_user function object.
+    Allows test cases to call the function directly with custom arguments.
+    """
+    return new_user
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -64,11 +94,13 @@ def configure_global_logging(request):
     # Define a clean text format for your console and files
     log_format = logging.Formatter(
         fmt="%(asctime)s [%(levelname)s] %(name)s::%(funcName)s::%(lineno)d::%(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # 1. Local File Handler (Tracks everything globally across POMs and tests)
-    file_handler = logging.FileHandler("logs/execution_flow.log", mode="w", encoding="utf-8")
+    file_handler = logging.FileHandler(
+        "logs/execution_flow.log", mode="w", encoding="utf-8"
+    )
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(log_format)
     root_logger.addHandler(file_handler)
@@ -103,25 +135,6 @@ def configure_global_logging(request):
         handler.close()
         root_logger.removeHandler(handler)
 
-
-@pytest.fixture
-def signup_data() -> dict:
-    """Create unique signup test data for each test execution.
-
-    Returns:
-        Signup data containing a dynamically generated name and email.
-    """
-    with TEST_DATA_PATH.open("r", encoding="utf-8") as file:
-        data = json.load(file)
-
-    unique_id = uuid.uuid4().hex[:8]
-
-    data["signup"]["name"] = f"TestUser{unique_id}"
-    data["signup"]["email_address"] = (
-        f"testuser_{unique_id}@example.com"
-    )
-
-    return data["signup"]
 
 # pytesthook for reporting and adding the screenshots on failure
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
@@ -162,11 +175,10 @@ def pytest_runtest_makereport(item, call):
                         "data": screenshot_bytes,
                         "mime": "image/png",
                     }
-                }
+                },
             )
         else:
             # If the driver wasn't found, log a clean warning across all pipelines
             logger.warning(
                 f"Automation dropped an error on '{item.name}', but 'get_driver' fixture instance was unreachable."
             )
-

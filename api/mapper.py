@@ -1,7 +1,8 @@
-from dataclasses import  asdict
+from dataclasses import asdict
 
 #  This maps the dataclass attributes with what actually need to be pass in signup user
 #  This is just for mapping and nothing else
+
 
 def user_dataclass_to_payload(user_obj) -> dict:
 
@@ -13,17 +14,15 @@ def user_dataclass_to_payload(user_obj) -> dict:
     address = raw_dict.pop("address")
 
     flat_payload = {
-         # Core user details
+        # Core user details
         "name": raw_dict.get("name"),
         "email": raw_dict.get("email"),
         "password": raw_dict.get("password"),
         "title": raw_dict.get("title"),
-        
         # Flattened Date parameters
         "birth_date": dob.get("day"),
         "birth_month": dob.get("month"),
         "birth_year": dob.get("year"),
-        
         # Flattened Address parameters
         "firstname": address.get("first_name"),
         "lastname": address.get("last_name"),
@@ -34,6 +33,6 @@ def user_dataclass_to_payload(user_obj) -> dict:
         "zipcode": address.get("zipcode"),
         "state": address.get("state"),
         "city": address.get("city"),
-        "mobile_number": address.get("mobile_number")
+        "mobile_number": address.get("mobile_number"),
     }
     return flat_payload
