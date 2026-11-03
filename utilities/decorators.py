@@ -1,14 +1,18 @@
 import logging
 import time
+from collections.abc import Callable
 from functools import wraps
-from typing import Callable
 
-from selenium.common import StaleElementReferenceException, NoSuchElementException, TimeoutException
+from selenium.common import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 
 logger = logging.getLogger(__name__)
 
 
-def logging_decorator(func) :
+def logging_decorator(func):
     """Log method execution and failures.
 
     Args:
@@ -20,24 +24,17 @@ def logging_decorator(func) :
 
     @wraps(func)
     def logging_wrapper(*args, **kwargs):
-        logger.debug(
-            f"Executing {func.__name__}"
-        )
+        logger.debug(f"Executing {func.__name__}")
 
         try:
             result = func(*args, **kwargs)
 
-            logger.debug(
-                f"Successfully executed {func.__name__}"
-            )
-
+            logger.debug(f"Successfully executed {func.__name__}")
 
             return result
 
         except Exception:
-            logger.exception(
-                f"Exception occurred while executing {func.__name__}"
-            )
+            logger.exception(f"Exception occurred while executing {func.__name__}")
             raise
 
     return logging_wrapper
@@ -62,7 +59,7 @@ def retry_on_exception(
     if times < 1:
         raise ValueError("times must be at least 1.")
 
-    def retry_decorator(func) :
+    def retry_decorator(func):
 
         @wraps(func)
         def retry_wrapper(*args, **kwargs):
@@ -70,12 +67,12 @@ def retry_on_exception(
                 try:
                     return func(*args, **kwargs)
 
-                except [StaleElementReferenceException, TimeoutException, NoSuchElementException] as ex:
+                except (NoSuchElementException, StaleElementReferenceException,TimeoutException):
                     if attempt == times:
                         logger.exception(
                             f"{func.__name__} failed after {times} attempts."
                         )
-                        raise ex
+                        raise
 
                     logger.warning(
                         f"{func.__name__} failed on attempt {attempt}/{times}. Retrying..."
@@ -89,11 +86,10 @@ def retry_on_exception(
 
     return retry_decorator
 
-def retry_on_condition(
-    times: int = 3,
-    delay: float = 0
-) -> Callable:
+
+def retry_on_condition(times: int = 3, delay: float = 0) -> Callable:
     """Retry a function when a specified condition occurs."""
+
     def retry_on_condition_decorator(func):
         @wraps(func)
         def retry_on_condition_wrapper(*args, **kwargs):
@@ -105,5 +101,7 @@ def retry_on_condition(
                 if delay:
                     time.sleep(delay)
             return result
+
         return retry_on_condition_wrapper
+
     return retry_on_condition_decorator

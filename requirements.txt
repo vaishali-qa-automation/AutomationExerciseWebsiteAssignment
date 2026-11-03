@@ -2,3 +2,7 @@ pytest
 selenium
 pytest_reportportal
 reportportal_client
+faker
+requests
+urllib3
+ruff
