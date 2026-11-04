@@ -1,6 +1,8 @@
 pytest
 selenium
 pytest_reportportal
+pytest-xdist
+pytest-html
 reportportal_client
 faker
 requests

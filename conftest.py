@@ -1,3 +1,4 @@
+import base64
 import logging
 import time
 from collections.abc import Callable
@@ -5,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from reportportal_client import RPLogger, RPLogHandler
+from pytest_html import extras as html_extras
 
 from api.base_client import BaseClient
 from api.users_api import UsersApi
@@ -143,7 +145,7 @@ def pytest_runtest_makereport(item, call):
     # We only care when an actual test validation step ("call") drops an assertion failure
     if result.when == "call" and result.failed:
         # Fetch your active browser instance dynamically from the current test context
-        driver = item.funcargs.get("get_driver", None)
+        driver = item.funcargs.get("driver", None)
 
         if driver:
             # 1. Save locally to a workspace directory
@@ -157,6 +159,10 @@ def pytest_runtest_makereport(item, call):
 
             # 2. Extract image bytes for data transport
             screenshot_bytes = driver.get_screenshot_as_png()
+            png_b64 = base64.b64encode(screenshot_bytes).decode("utf-8")
+            result.extras = getattr(result, "extras", []) + [
+                html_extras.png(png_b64, name=screenshot_filename)
+            ]
 
             # 3. Use the global logger to dispatch to ALL targets at once
             logger.error(

@@ -10,11 +10,12 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://www.automationexercise.com/"
 
 
-@pytest.mark.smoke
+
 @pytest.mark.ui
 class TestSignup:
     """Signup flow tests for automationexercise.com"""
 
+    @pytest.mark.smoke
     def test_valid_sign_up(self, driver, user_data_factory, user_api):
         """Verify a new user can sign up via the UI and is persisted in the backend."""
         user = user_data_factory()
@@ -47,7 +48,15 @@ class TestSignup:
 
     @staticmethod
     def _safe_delete_user(user_api, user):
-        """Best-effort cleanup — never let teardown mask the real test failure."""
+        """
+        Method to delete a user from the database
+        Args:
+            user_api: user api object to access api methods specific to user
+            user: dataclass of user to access the user details
+
+        Returns: None
+
+        """
         try:
             delete_response = user_api.delete_user(email=user.email, password=user.password)
             if getattr(delete_response, "status_code", None) not in (200, 204):

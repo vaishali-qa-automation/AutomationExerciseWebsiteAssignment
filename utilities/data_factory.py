@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from faker import Faker
@@ -6,6 +7,7 @@ from models.user import Address, User
 
 fake = Faker()
 
+logger = logging.getLogger(__name__)
 
 def generate_unique_email() -> str:
     """Generate a unique email address for test execution.
@@ -28,7 +30,7 @@ def generate_random_password() -> str:
 def new_user(**overrides) -> User:
     first_name = fake.first_name()
     last_name = fake.last_name()
-
+    logger.debug(f"Overrides: {overrides}")
     data = {
         "name": f"{first_name} {last_name}",
         "email": generate_unique_email(),
