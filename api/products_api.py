@@ -4,6 +4,7 @@ from api.base_client import BaseClient
 
 logger = logging.getLogger(__name__)
 
+
 class ProductsEndpoints:
     PRODUCTS_LIST = "/api/productsList"
     BRANDS_LIST = "/api/brandsList"
@@ -15,7 +16,7 @@ class ProductsApi:
         self._client = client
 
     def list_products(self):
-        logger.info(f"Listing products")
+        logger.info("Listing products")
         return self._client.get(ProductsEndpoints.PRODUCTS_LIST)
 
     def search_product(self, product: str):
@@ -26,5 +27,5 @@ class ProductsApi:
         )
 
     def list_brands(self):
-        logger.info(f"Listing brands")
+        logger.info("Listing brands")
         return self._client.get(ProductsEndpoints.BRANDS_LIST)

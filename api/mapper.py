@@ -1,8 +1,9 @@
 from dataclasses import asdict
-
+import logging
 #  This maps the dataclass attributes with what actually need to be pass in signup user
 #  This is just for mapping and nothing else
 
+logger = logging.getLogger(__name__)
 
 def user_dataclass_to_payload(user_obj) -> dict:
 
@@ -35,4 +36,5 @@ def user_dataclass_to_payload(user_obj) -> dict:
         "city": address.get("city"),
         "mobile_number": address.get("mobile_number"),
     }
+    logger.debug(f"Creating payload: {flat_payload}")
     return flat_payload

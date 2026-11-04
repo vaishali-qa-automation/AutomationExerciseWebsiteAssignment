@@ -4,4 +4,5 @@
 .idea/*
 .venv/
 *.html# created by virtualenv automatically
+*.html
 

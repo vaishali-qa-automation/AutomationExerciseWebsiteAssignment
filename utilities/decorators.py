@@ -2,13 +2,6 @@ import logging
 import time
 from collections.abc import Callable
 from functools import wraps
-from typing import Tuple, Type
-
-from selenium.common import (
-    NoSuchElementException,
-    StaleElementReferenceException,
-    TimeoutException,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +20,9 @@ def logging_decorator(func):
     def logging_wrapper(*args, **kwargs):
         visible_args = args[1:] if len(args) > 0 else args
 
-        logger.debug(f"Executing {func.__name__} with agrs {visible_args} and kwargs {kwargs}")
+        logger.debug(
+            f"Executing {func.__name__} with agrs {visible_args} and kwargs {kwargs}"
+        )
 
         try:
             result = func(*args, **kwargs)
@@ -39,7 +34,6 @@ def logging_decorator(func):
         except Exception as e:
             logger.warning(
                 f"Transient exception in '{func.__name__}': {type(e).__name__} -> {e}. "
-
             )
             raise
 
@@ -47,9 +41,11 @@ def logging_decorator(func):
 
 
 def retry_on_exception(
-        times: int = 3,
-        delay: float = 0.0,
-        exceptions: Tuple[Type[BaseException], ...] = (Exception,)  # Configurable exceptions
+    times: int = 3,
+    delay: float = 0.0,
+    exceptions: tuple[type[BaseException], ...] = (
+        Exception,
+    ),  # Configurable exceptions
 ) -> Callable:
     """Decorator to retry a function when specified exceptions occur.
 

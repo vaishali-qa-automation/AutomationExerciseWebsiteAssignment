@@ -1,7 +1,10 @@
 import logging
 from typing import Any
 
-from selenium.common import ElementClickInterceptedException, StaleElementReferenceException, TimeoutException
+from selenium.common import (
+    StaleElementReferenceException,
+    TimeoutException,
+)
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
@@ -9,7 +12,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from utilities.decorators import (
     logging_decorator,
-    retry_on_condition,
     retry_on_exception,
 )
 
@@ -56,7 +58,9 @@ class BasePageClass:
         return elem
 
     @logging_decorator
-    @retry_on_exception(times=2, delay=0.2, exceptions=(StaleElementReferenceException,))
+    @retry_on_exception(
+        times=2, delay=0.2, exceptions=(StaleElementReferenceException,)
+    )
     def click_element(self, locator: tuple[str, str]) -> None:
         """
         Waits for an element to be clickable by its locator and clicks it.
@@ -69,8 +73,10 @@ class BasePageClass:
         element = self.wait.until(EC.element_to_be_clickable(locator))
         element.click()
 
-    @retry_on_exception(times=2, delay=0.2, exceptions=(StaleElementReferenceException,))
     @logging_decorator
+    @retry_on_exception(
+        times=2, delay=0.2, exceptions=(StaleElementReferenceException,)
+    )
     def enter_text(self, locator: tuple[str, str], text: str) -> None:
         """
         Wait for an input element, clear it, and enter text using its locator.
