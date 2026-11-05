@@ -44,28 +44,28 @@ class TestSignup:
 
         finally:
             if account_submitted:
-                self._safe_delete_user(user_api, user)
+                user_api.delete_user(user_api, user)
 
-    @staticmethod
-    def _safe_delete_user(user_api, user):
-        """
-        Method to delete a user from the database
-        Args:
-            user_api: user api object to access api methods specific to user
-            user: dataclass of user to access the user details
-
-        Returns: None
-
-        """
-        try:
-            delete_response = user_api.delete_user(email=user.email, password=user.password)
-            if getattr(delete_response, "status_code", None) not in (200, 204):
-                logger.warning(
-                    f"Cleanup: delete_user for {user.email} returned "
-                    f"{getattr(delete_response, 'status_code', 'unknown')}"
-                )
-            else:
-                logger.info(f"Cleanup: deleted user {user.email}")
-
-        except Exception as cleanup_error:
-            logger.warning(f"Cleanup failed for {user.email}: {cleanup_error}")
+    # @staticmethod
+    # def _safe_delete_user(user_api, user):
+    #     """
+    #     Method to delete a user from the database
+    #     Args:
+    #         user_api: user api object to access api methods specific to user
+    #         user: dataclass of user to access the user details
+    #
+    #     Returns: None
+    #
+    #     """
+    #     try:
+    #         delete_response = user_api.delete_user(email=user.email, password=user.password)
+    #         if getattr(delete_response, "status_code", None) not in (200, 204):
+    #             logger.warning(
+    #                 f"Cleanup: delete_user for {user.email} returned "
+    #                 f"{getattr(delete_response, 'status_code', 'unknown')}"
+    #             )
+    #         else:
+    #             logger.info(f"Cleanup: deleted user {user.email}")
+    #
+    #     except Exception as cleanup_error:
+    #         logger.warning(f"Cleanup failed for {user.email}: {cleanup_error}")

@@ -1,5 +1,6 @@
-from dataclasses import asdict
 import logging
+from dataclasses import asdict
+
 #  This maps the dataclass attributes with what actually need to be pass in signup user
 #  This is just for mapping and nothing else
 
