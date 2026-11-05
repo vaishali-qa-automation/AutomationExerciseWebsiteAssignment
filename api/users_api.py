@@ -27,7 +27,7 @@ class UsersApi:
         logger.info(f"Updating user: {user_data}")
         payload = user_dataclass_to_payload(user_data)
         return self._client.put(
-            UserEndpoints.UPDATE_USER_ACCOUNT, json=payload, headers=headers
+            UserEndpoints.UPDATE_USER_ACCOUNT, data=payload, headers=headers
         )
 
     def get_user_by_email(self, email, headers=None):
@@ -40,7 +40,7 @@ class UsersApi:
         logger.info(f"Verifying user: {email}")
         return self._client.post(
             UserEndpoints.VERIFY_USER_LOGIN,
-            json={"email": email, "password": password},
+            data={"email": email, "password": password},
             headers=headers,
         )
 
@@ -48,6 +48,6 @@ class UsersApi:
         logger.info(f"Deleting user: {email}")
         return self._client.delete(
             UserEndpoints.DELETE_USER_ACCOUNT,
-            json={"email": email, "password": password},
+            data={"email": email, "password": password},
             headers=headers,
         )

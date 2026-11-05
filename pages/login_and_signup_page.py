@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 
 from models.user import User
 from pages.base_page import BasePageClass
-from pages.headers_components import HeaderComponentClass
+from pages.components.headers_components import HeaderComponentClass
 
 logger = logging.getLogger(__name__)
 

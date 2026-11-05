@@ -5,8 +5,8 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from reportportal_client import RPLogger, RPLogHandler
 from pytest_html import extras as html_extras
+from reportportal_client import RPLogger, RPLogHandler
 
 from api.base_client import BaseClient
 from api.users_api import UsersApi
@@ -20,7 +20,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 CONFIG_FILE = Path(__file__).parent / "config" / "env_config.ini"
-SUPPORTED_BROWSERS = ["chrome", "firefox"]
+SUPPORTED_BROWSERS = ["chrome", "firefox", "edge"]
 
 
 def pytest_addoption(parser):
