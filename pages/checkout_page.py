@@ -194,3 +194,11 @@ class CheckoutPageClass(BasePageClass):
         logger.info(
             "Successfully navigated to the payment page."
         )
+
+    def is_checkout_page_visible(self) -> bool:
+        """
+        Verify if the checkout page is opened.
+        Returns: bool
+
+        """
+        return self.is_element_visible(CheckoutPageLocator.CHECKOUT_INFO)

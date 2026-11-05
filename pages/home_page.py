@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 
 from pages.base_page import BasePageClass
 from pages.components.cart_modal import CartModalClass
-from pages.components.header_components import HeaderComponentClass
+from pages.components.headers_components import HeaderComponentClass
 from pages.components.product_tile import ProductTile
 
 logger = logging.getLogger(__name__)

@@ -17,6 +17,7 @@ class LoginAndSignUpLocators:
     LOGIN_EMAIL_ADDRESS = (By.CSS_SELECTOR, "input[data-qa='login-email']")
     LOGIN_PASSWORD = (By.CSS_SELECTOR, "input[data-qa='login-password']")
     LOGIN_BUTTON = (By.CSS_SELECTOR, "button[data-qa='login-button']")
+    LOGIN_ERROR_MESSAGE = (By.CSS_SELECTOR, ".login-form p")
 
     # Initial signup form
     SIGNUP_FORM = (By.CLASS_NAME, "signup-form")
@@ -111,6 +112,30 @@ class LoginAndSignUpPageClass(BasePageClass):
         self._enter_username(username)
         self._enter_password(password)
         self._click_login_button()
+
+    def get_password_validation_message(self):
+        field = self.locate_element(LoginAndSignUpLocators.LOGIN_PASSWORD)
+        return field.get_attribute("validationMessage")
+
+    def is_password_missing(self):
+        field = self.locate_element(LoginAndSignUpLocators.LOGIN_PASSWORD)
+        return self.driver.execute_script("return arguments[0].validity.valueMissing;", field)
+
+    def get_username_validation_message(self):
+        field = self.locate_element(LoginAndSignUpLocators.LOGIN_EMAIL_ADDRESS)
+        return field.get_attribute("validationMessage")
+
+    def is_username_valid(self):
+        email_field = self.locate_element(LoginAndSignUpLocators.LOGIN_EMAIL_ADDRESS)
+        return self.driver.execute_script("return arguments[0].validity.typeMismatch;", email_field)
+
+    def is_username_missing(self):
+        email_field = self.locate_element(LoginAndSignUpLocators.LOGIN_EMAIL_ADDRESS)
+        return self.driver.execute_script("return arguments[0].validity.valueMissing;", email_field)
+
+    def get_login_error_message(self):
+        elem = self.locate_element(LoginAndSignUpLocators.LOGIN_ERROR_MESSAGE)
+        return elem.text
 
     # ------------------------------------------------------------------
     # Initial signup

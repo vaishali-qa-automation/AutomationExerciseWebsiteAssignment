@@ -9,7 +9,9 @@ from pytest_html import extras as html_extras
 from reportportal_client import RPLogger, RPLogHandler
 
 from api.base_client import BaseClient
+from api.products_api import ProductsApi
 from api.users_api import UsersApi
+from flows.order_flow import OrderFlow
 from utilities.common_methods import get_config_section
 from utilities.data_factory import new_user
 from utilities.driver_factory import get_driver
@@ -72,6 +74,10 @@ def user_api(base_client):
     user_api = UsersApi(base_client)
     return user_api
 
+@pytest.fixture(scope="session")
+def product_api(base_client):
+    product_api = ProductsApi(base_client)
+    return product_api
 
 @pytest.fixture
 def user_data_factory() -> Callable:
@@ -81,6 +87,36 @@ def user_data_factory() -> Callable:
     """
     return new_user
 
+@pytest.fixture
+def order_flow(driver):
+    return OrderFlow(driver)
+
+@pytest.fixture
+def user_cleanup(user_api):
+    """Collect users created during a test and delete them afterwards."""
+    users = []
+    yield users.append
+    for user in users:
+        response = user_api.delete_user(user.email, user.password)
+        if response.json().get("responseCode") != 200:
+            logger.warning(f"Cleanup failed for {user.email}: {response.text}")
+
+@pytest.fixture
+def registered_user(user_api, user_data_factory):
+    """Create a user account for tests that require login, and delete it afterward."""
+    user_data = user_data_factory()
+
+    response = user_api.create_user(user_data)
+    body = response.json()
+    if body.get("responseCode") != 201:
+        pytest.fail(f"User creation failed: {body}")
+
+    credentials = {"email": user_data.email, "password": user_data.password}
+    yield user_data
+
+    delete_response = user_api.delete_user(credentials["email"], credentials["password"])
+    if delete_response.json().get("responseCode") != 200:
+        logger.warning("Cleanup failed for %s: %s", credentials["email"], delete_response.text)
 
 @pytest.fixture(scope="session", autouse=True)
 def configure_global_logging(request):

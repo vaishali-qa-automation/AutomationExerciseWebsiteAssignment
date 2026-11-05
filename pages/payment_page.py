@@ -46,6 +46,10 @@ class PaymentPageLocator:
         By.CSS_SELECTOR,
         "#success_message .alert-success",
     )
+    ORDER_PLACED = (
+        By.CSS_SELECTOR,
+        "[data-qa='order-placed']"
+    )
 
 
 class PaymentPageClass(BasePageClass):
@@ -180,7 +184,7 @@ class PaymentPageClass(BasePageClass):
             bool: True if the success message is visible, otherwise False.
         """
         is_successful = self.is_element_visible(
-            PaymentPageLocator.SUCCESS_MESSAGE
+            PaymentPageLocator.ORDER_PLACED, timeout=10
         )
 
         if is_successful:
