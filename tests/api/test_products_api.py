@@ -8,4 +8,4 @@ class TestProductsApi:
         response = product_api.list_products()
         json_data = response.json()
         assert json_data["responseCode"] == 200
-        assert type(json_data["products"][0]['id']) == 'int'
+        assert isinstance(json_data["products"][0]["id"], int)
