@@ -59,7 +59,7 @@ class BasePageClass:
 
     @logging_decorator
     @retry_on_exception(
-        times=2, delay=0.2, exceptions=(StaleElementReferenceException,ElementClickInterceptedException)
+        times=2, delay=0.2, exceptions=(StaleElementReferenceException,)
     )
     def click_element(self, locator: tuple[str, str]) -> None:
         """
