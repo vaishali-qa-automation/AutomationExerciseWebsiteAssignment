@@ -70,7 +70,8 @@ class BasePageClass:
         Returns: None
 
         """
-        element = self.wait.until(EC.element_to_be_clickable(locator))
+        webdriver_wait = WebDriverWait(self.driver, timeout=20)
+        element = webdriver_wait.until(EC.element_to_be_clickable(locator))
         element.click()
 
     @logging_decorator
