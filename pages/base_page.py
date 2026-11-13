@@ -3,7 +3,7 @@ from typing import Any
 
 from selenium.common import (
     StaleElementReferenceException,
-    TimeoutException,
+    TimeoutException, ElementClickInterceptedException,
 )
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as EC
@@ -59,7 +59,7 @@ class BasePageClass:
 
     @logging_decorator
     @retry_on_exception(
-        times=2, delay=0.2, exceptions=(StaleElementReferenceException,)
+        times=2, delay=0.2, exceptions=(StaleElementReferenceException,ElementClickInterceptedException)
     )
     def click_element(self, locator: tuple[str, str]) -> None:
         """
